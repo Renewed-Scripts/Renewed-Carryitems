@@ -31,7 +31,30 @@ local function canCarry(source)
     return source and not Players[source]
 end
 
+local function checkInventory(source)
+    if not Players[source] then
+        local Items = exports.ox_inventory:GetInventoryItems(source)
+
+        for _, item in pairs(Items) do
+            if Config[item.name] then
+                return equipItem(source, item.name)
+            end
+        end
+    end
+end
+
+AddEventHandler('Renewed-Lib:server:playerLoaded', checkInventory)
+AddEventHandler('Renewed-Lib:server:playerRemoved', function(source)
+    if Players[source] then
+        DeleteEntity(Players[source])
+        Players[source] = nil
+        Player(source).state:set('attachEntity', nil, true)
+    end
+end)
+
 exports('canCarry', canCarry)
+
+
 
 exports.ox_inventory:registerHook('swapItems', function(payload)
     if not payload.source then return true end
@@ -47,6 +70,19 @@ exports.ox_inventory:registerHook('swapItems', function(payload)
         DeleteEntity(Players[source])
         Players[source] = nil
         Player(source).state:set('attachEntity', nil, true)
+    end
+
+    return true
+end, {
+    itemFilter = Config,
+})
+
+exports.ox_inventory:registerHook('createItem', function(payload)
+
+    if type(payload.inventoryId) == 'number' and DoesPlayerExist(payload.inventoryId) then
+        SetTimeout(200, function()
+            checkInventory(payload.inventoryId)
+        end)
     end
 
     return true
@@ -79,3 +115,13 @@ exports.ox_inventory:registerHook('craftItem', function(payload)
 end, {
     itemFilter = Config,
 })
+
+
+AddEventHandler('onResourceStop', function(resource)
+   if resource == GetCurrentResourceName() then
+      for k, v in pairs(Players) do
+         DeleteEntity(v)
+         Player(k).state:set('attachEntity', nil, true)
+      end
+   end
+end)
