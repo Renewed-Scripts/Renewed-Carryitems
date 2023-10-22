@@ -58,11 +58,11 @@ exports('canCarry', canCarry)
 
 exports.ox_inventory:registerHook('swapItems', function(payload)
     if not payload.source then return true end
+    if payload.fromInventory == payload.toInventory then return true end
 
     local item = payload.fromSlot and payload.fromSlot.name or payload.toSlot.name
-    local addItem = type(payload.fromInventory) == 'string'
+    local addItem = type(payload.fromInventory) == 'string' and payload.toInventory == payload.source
     local source = payload.source
-
 
     if addItem then
         return not Players[source] and equipItem(source, item) or false
