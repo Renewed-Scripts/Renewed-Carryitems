@@ -35,15 +35,22 @@ local function checkInventory(source)
     if not Players[source] then
         local Items = exports.ox_inventory:GetInventoryItems(source)
 
-        for _, item in pairs(Items) do
-            if Config[item.name] then
-                return equipItem(source, item.name)
+        if Items and type(Items) == 'table' and next(Items) then
+            for _, item in pairs(Items) do
+                if Config[item.name] then
+                    return equipItem(source, item.name)
+                end
             end
         end
     end
 end
 
-AddEventHandler('Renewed-Lib:server:playerLoaded', checkInventory)
+AddEventHandler('Renewed-Lib:server:playerLoaded', function(source)
+    SetTimeout(1000, function()
+        checkInventory(source)
+    end)
+end)
+
 AddEventHandler('Renewed-Lib:server:playerRemoved', function(source)
     if Players[source] then
         DeleteEntity(Players[source])
